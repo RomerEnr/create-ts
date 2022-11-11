@@ -341,6 +341,7 @@ exec(`cat >src/server.ts << EOF
 import express from "express";
 import cors from "cors";
 
+const PORT = 3000 || process.env.PORT;
 const app = express().use(express.json());
 app.use(cors());
 
