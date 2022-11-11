@@ -49,8 +49,8 @@ if (!GIT) {
   console.log(`${color("red", "git")} not detected. Install with ${color("yellow", "sudo apt-get install git")}`);
 }
 
-const isFront = ARGS.includes("--phaser");
-const isBack = ARGS.includes("--lit");
+const isFront = ARGS.includes("--front");
+const isBack = ARGS.includes("--back");
 
 if (NPM < 7) {
   console.log(`${color("red", "npm 7")} is required. Install with ${color("yellow", "npm install -g npm")}`);
@@ -76,7 +76,178 @@ try {
   process.exit(-5);
 }
 
-console.log(`[${color("yellow", "1")}/3] Iniciando ${color("green", `${NAME}`)}...`);
+if(isFront){
+  console.log(`[${color("yellow", "1")}/3] Instalando ${color("green", "vite")}...`);
+  exec(`npm init vite@latest ${NAME} -y -- --template vanilla-ts >/dev/null`);
+
+  console.log(`[${color("yellow", "2")}/3] Creando ${color("cyan", "estructura de carpetas")}...`);
+  process.chdir(NAME);
+
+  GIT && exec(`git init`);
+  exec(`cat >apackage.json << EOF
+  {
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview"
+    },
+    "keywords": [],
+    "license": "ISC"
+  }
+EOF
+  `);
+
+  exec(`jq -s '.[0] * .[1]' package.json apackage.json >package2.json`);
+  exec("rm apackage.json package.json index.html");
+  exec("mv package2.json package.json");
+  exec("rm src/main.ts src/style.css src/counter.ts src/typescript.svg public/vite.svg");
+
+  exec(`touch src/index.ts src/index.html src/index.css`);
+
+  exec(`cat >postcss.config.js << EOF
+  export default {
+    plugins: {
+      "postcss-nesting": true
+    }
+  };
+EOF
+  `);
+
+  exec(`cat >src/index.html << EOF
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./index.css">
+
+</head>
+<body>
+
+
+<script type="module" src="./index.ts"></script>
+</body>
+</html>
+EOF`);  
+
+exec(`cat >vite.config.js << EOF
+import path from "path";
+const isGitHubPages = true;
+const folderName = path.basename(process.cwd()) + "/";
+const mode = process.env.NODE_ENV === "production" ? "production" : "development";
+const base = mode === "production" && isGitHubPages ? "/" + folderName : "/";
+
+export default {
+  root: "src",
+  base,
+  mode,
+  publicDir: "../public",
+  build: {
+    outDir: "../dist",
+    assetsDir: "./"
+  }
+};
+EOF
+`);
+
+exec(`cat >.eslintrc.cjs << EOF
+module.exports = {
+  env: {
+    browser: false
+  },
+  extends: [
+    "@cowcoders/eslint-config/ts"
+  ],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    ecmaVersion: "latest",
+    sourceType: "module"
+  },
+  plugins: [
+    "@typescript-eslint"
+  ],
+  rules: {
+    quotes: ["error", "double"],
+    semi: ["error", "always"],
+    "comma-dangle": ["error", "only-multiline"],
+    "space-before-function-paren": ["error", "never"]
+  }
+};
+EOF
+`);
+
+exec(`cat >.stylelintrc << EOF
+{
+  "extends": "stylelint-config-standard",
+  "customSyntax": "postcss-syntax",
+  "rules": {
+    "declaration-colon-newline-after": "always-multi-line",
+    "selector-type-no-unknown": null,
+    "property-no-unknown": [
+        true,
+        {
+          "ignoreProperties": [
+            "content-visibility"
+          ]
+        }
+    ]
+  }
+}
+EOF
+`);
+
+exec(`cat >tsconfig.json << EOF
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "useDefineForClassFields": true,
+      "module": "ESNext",
+      "lib": ["ESNext", "DOM"],
+      "moduleResolution": "Node",
+      "strict": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "esModuleInterop": true,
+      "noEmit": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "noImplicitReturns": true,
+      "skipLibCheck": true
+    },
+    "include": ["src"]
+  }
+  
+EOF
+`);
+
+const DEVDEP = [
+  "stylelint@14.11.0", "stylelint-config-standard@28.0.0", "postcss-nesting",
+  "postcss", "postcss-syntax", "postcss-html", "postcss-jsx", "postcss-styled", "@stylelint/postcss-css-in-js",
+  "eslint", "eslint-plugin-import", "eslint-plugin-n@14.0.0", "eslint-plugin-promise", "eslint-config-standard@17.0.0-1",
+  "gh-pages", "typescript", "@typescript-eslint/eslint-plugin", "@typescript-eslint/parser"
+];
+
+const DEP = [];
+
+console.log(`[${color("yellow", "3")}/3] Instalando ${color("magenta", "dependencias")}...`);
+if (DEP.length > 0) {
+  const PACKAGES = DEP.join(" ");
+  exec(`npx add-dependencies ${PACKAGES} 2>/dev/null`);
+}
+
+const DEVPACKAGES = DEVDEP.join(" ");
+exec(`npx add-dependencies ${DEVPACKAGES} --dev 2>/dev/null`);
+
+console.log(`\n¡${color("green", "Listo")}! Para empezar, escribe:
+
+cd ${NAME}
+git remote add origin <repo>
+${PM} install
+${PM} run dev`);
+} else if(isBack){
+  console.log(`[${color("yellow", "1")}/3] Iniciando ${color("green", `${NAME}`)}...`);
 exec(`mkdir ${NAME}`);
 process.chdir(NAME);
 exec(`npm init -y`);
@@ -88,7 +259,7 @@ GIT && exec(`git init`);
 exec(`cat >apackage.json << EOF
 {
 	"scripts": {
-    "start:prod": "${PM} run build && node dist/index.js",
+    "start:prod": "${NAME} run build && node dist/index.js",
     "dev": "nodemon src/server.js",
 		"build": "tsc",
     "start":  "nodemon",
@@ -96,39 +267,6 @@ exec(`cat >apackage.json << EOF
 	},
 	"keywords": [],
 	"license": "ISC"
-}
-EOF
-`);
-
-exec("mkdir .vscode");
-exec(`cat >.vscode/settings.json << EOF
-// updated 2022-03-08 07:16
-// https://github.com/antfu/vscode-file-nesting-config
-{
-  "explorer.experimental.fileNesting.enabled": true,
-  "explorer.experimental.fileNesting.expand": false,
-  "explorer.experimental.fileNesting.patterns": {
-    ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
-    "*.js": "\\$(capture).js.map, \\$(capture).min.js, \\$(capture).d.ts",
-    "*.jsx": "\\$(capture).js",
-    "*.ts": "\\$(capture).js, \\$(capture).*.ts",
-    "*.tsx": "\\$(capture).ts",
-    "index.d.ts": "*.d.ts",
-    "shims.d.ts": "*.d.ts",
-    "go.mod": ".air*, go.sum",
-    ".env": "*.env, .env*, env.d.ts",
-    "dockerfile": ".dockerignore, dockerfile*",
-    "package.json": ".browserslist*, .circleci*, .codecov, .commitlint*, .editorconfig, .eslint*, .flowconfig, .gitlab*, .gitpod*, .huskyrc*, .jshintrc, .markdownlint*, .mocha*, .node-version, .nodemon*, .npm*, .nvmrc, .pm2*, .pnpm*, .prettier*, .releaserc*, .sentry*, .stackblitz*, .stylelint*, .tazerc*, .textlint*, .travis*, .vscode*, .watchman*, .yamllint*, .yarnrc*, api-extractor.json, appveyor*, ava.config.*, azure-pipelines*, build.config.*, commitlint*, crowdin*, cypress.json, dangerfile*, gulp*, jasmine.*, jenkins*, jest.config.*, jsconfig.*, karma*, lerna*, lint-staged*, nest-cli.*, netlify*, nodemon*, nx.*, package-lock.json, playwright.config.*, pm2.*, pnpm*, prettier*, pullapprove*, puppeteer.config.*, renovate*, rollup.config.*, stylelint*, tsconfig.*, tsdoc.*, tslint*, tsup.config.*, turbo*, vercel*, vetur.config.*, vitest.config.*, webpack.config.*, workspace.json, yarn*",
-    "readme.md": "authors, backers.md, changelog*.md, code_of_conduct.md, codeowners, contributing.md, contributors, copying, credits, governance.md, history.md, license*, maintainers, readme*, security.md, sponsors.md",
-    "cargo.toml": "cargo.lock, rust-toolchain.toml, rustfmt.toml",
-    "gemfile": ".ruby-version, gemfile.lock",
-    "vite.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, index.html, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
-    "vue.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
-    "nuxt.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
-    "next.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, next-env.d.ts, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
-    "svelte.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
-    "remix.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, remix.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*"
-  }
 }
 EOF
 `);
@@ -180,7 +318,7 @@ exec(`cat >tsconfig.json << EOF
     "forceConsistentCasingInFileNames": true,            
     "strict": true,                                      
     "skipLibCheck": true                                 
-  }
+  },
 }
 EOF
 `);
@@ -248,3 +386,39 @@ cd ${NAME}
 git remote add origin <repo>
 ${PM} install
 ${PM} run dev`);
+}
+
+exec("mkdir .vscode");
+exec(`cat >.vscode/settings.json << EOF
+// updated 2022-03-08 07:16
+// https://github.com/antfu/vscode-file-nesting-config
+{
+  "explorer.experimental.fileNesting.enabled": true,
+  "explorer.experimental.fileNesting.expand": false,
+  "explorer.experimental.fileNesting.patterns": {
+    ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
+    "*.js": "\\$(capture).js.map, \\$(capture).min.js, \\$(capture).d.ts",
+    "*.jsx": "\\$(capture).js",
+    "*.ts": "\\$(capture).js, \\$(capture).*.ts",
+    "*.tsx": "\\$(capture).ts",
+    "index.d.ts": "*.d.ts",
+    "shims.d.ts": "*.d.ts",
+    "go.mod": ".air*, go.sum",
+    ".env": "*.env, .env*, env.d.ts",
+    "dockerfile": ".dockerignore, dockerfile*",
+    "package.json": ".browserslist*, .circleci*, .codecov, .commitlint*, .editorconfig, .eslint*, .flowconfig, .gitlab*, .gitpod*, .huskyrc*, .jshintrc, .markdownlint*, .mocha*, .node-version, .nodemon*, .npm*, .nvmrc, .pm2*, .pnpm*, .prettier*, .releaserc*, .sentry*, .stackblitz*, .stylelint*, .tazerc*, .textlint*, .travis*, .vscode*, .watchman*, .yamllint*, .yarnrc*, api-extractor.json, appveyor*, ava.config.*, azure-pipelines*, build.config.*, commitlint*, crowdin*, cypress.json, dangerfile*, gulp*, jasmine.*, jenkins*, jest.config.*, jsconfig.*, karma*, lerna*, lint-staged*, nest-cli.*, netlify*, nodemon*, nx.*, package-lock.json, playwright.config.*, pm2.*, pnpm*, prettier*, pullapprove*, puppeteer.config.*, renovate*, rollup.config.*, stylelint*, tsconfig.*, tsdoc.*, tslint*, tsup.config.*, turbo*, vercel*, vetur.config.*, vitest.config.*, webpack.config.*, workspace.json, yarn*",
+    "readme.md": "authors, backers.md, changelog*.md, code_of_conduct.md, codeowners, contributing.md, contributors, copying, credits, governance.md, history.md, license*, maintainers, readme*, security.md, sponsors.md",
+    "cargo.toml": "cargo.lock, rust-toolchain.toml, rustfmt.toml",
+    "gemfile": ".ruby-version, gemfile.lock",
+    "vite.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, index.html, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
+    "vue.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
+    "nuxt.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
+    "next.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, next-env.d.ts, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
+    "svelte.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*",
+    "remix.config.*": "*.env, .babelrc, .codecov, .env*, .mocha*, .postcssrc.*, api-extractor.json, ava.config.*, babel.config.*, cypress.json, env.d.ts, jasmine.*, jest.config.*, jsconfig.*, karma*, playwright.config.*, postcss.config.*, puppeteer.config.*, remix.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, unocss.config.*, vitest.config.*, webpack.config.*, windi.config.*"
+  }
+}
+EOF
+`);
+
+
