@@ -346,16 +346,16 @@ exec(`cat > nodemon.json << EOF
 }
 `)
 
-exec(`cat >src/server.js << EOF
+exec(`cat >src/server.ts << EOF
 import express from "express";
 import cors from "cors";
 
 const app = express().use(express.json());
+const PORT = 3000 || process.env.PORT;
 
 
-
-app.listen(process.env.PORT, () => {
-  console.log("Server started on port " + process.env.PORT);
+app.listen(PORT, () => {
+  console.log("Server started on port " + PORT);
 });
 
 EOF
