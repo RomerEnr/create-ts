@@ -88,11 +88,11 @@ GIT && exec(`git init`);
 exec(`cat >apackage.json << EOF
 {
 	"scripts": {
-    "start:prod": "npm run build && node dist/index.js",
+    "start:prod": "ultra run build && node dist/index.js",
     "dev": "nodemon src/server.js",
 		"build": "tsc",
-    "start": "nodemon dist/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start":  "nodemon",
+    "test": "echo \`Error: no test specified\` && exit 1"
 	},
 	"keywords": [],
 	"license": "ISC"
@@ -133,9 +133,9 @@ exec(`cat >.vscode/settings.json << EOF
 EOF
 `);
 
-// exec(`jq -s '.[0] * .[1]' package.json apackage.json >package2.json`);
-// exec("rm apackage.json package.json");
-// exec("mv package2.json package.json");
+exec(`jq -s '.[0] * .[1]' package.json apackage.json >package2.json`);
+exec("rm apackage.json package.json");
+exec("mv package2.json package.json");
 
 exec("mkdir -p src");
 exec("touch src/index.ts");
@@ -189,6 +189,24 @@ exec(`cat >.env << EOF
 PORT=3000
 EOF
 `);
+
+exec(`cat >.gitignore << EOF
+dist
+node_modules
+.env
+.DS_Store
+.vscode
+EOF
+`);
+
+exec(`cat > nodemon.json << EOF
+{
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["src/**/*.spec.ts"],
+  "exec": "ts-node-esm ./src/index.ts"
+}
+`)
 
 exec(`cat >src/server.js << EOF
 import express from "express";
