@@ -250,7 +250,7 @@ ${PM} run dev`);
   console.log(`[${color("yellow", "1")}/3] Iniciando ${color("green", `${NAME}`)}...`);
 exec(`mkdir ${NAME}`);
 process.chdir(NAME);
-exec(`${PM} init ${NAME} -y`);
+exec(`npm init -y`);
 
 console.log(`[${color("yellow", "2")}/3] Creando ${color("cyan", "estructura de carpetas")}...`);
 
