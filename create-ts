@@ -226,7 +226,7 @@ const DEVDEP = [
   "stylelint@14.11.0", "stylelint-config-standard@28.0.0", "postcss-nesting",
   "postcss", "postcss-syntax", "postcss-html", "postcss-jsx", "postcss-styled", "@stylelint/postcss-css-in-js",
   "eslint", "eslint-plugin-import", "eslint-plugin-n@14.0.0", "eslint-plugin-promise", "eslint-config-standard@17.0.0-1",
-  "gh-pages", "typescript", "@typescript-eslint/eslint-plugin", "@typescript-eslint/parser"
+  "gh-pages", "typescript", "@typescript-eslint/eslint-plugin", "@typescript-eslint/parser", "@cowcoders/eslint-config"
 ];
 
 const DEP = [];
@@ -262,7 +262,7 @@ exec(`cat >apackage.json << EOF
     "start:prod": "${PM} run build && node dist/index.js",
     "dev": "nodemon src/server.ts",
 		"build": "tsc",
-    "start":  "nodemon --watch src/** --ext ts,json --ignore src/**/*.specs.ts --exects-node-esm ./src/index.ts",
+    "start":  "nodemon --watch src/** --ext ts,json --ignore src/**/*.specs.ts --exec ts-node-esm ./src/index.ts",
     "test": "echo \`Error: no test specified\` && exit 1"
 	},
 	"keywords": [],
