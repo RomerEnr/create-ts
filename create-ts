@@ -154,26 +154,24 @@ EOF
 
 exec(`cat >.eslintrc.cjs << EOF
 module.exports = {
-  env: {
-    browser: false
-  },
-  extends: [
-    "@cowcoders/eslint-config/ts"
-  ],
-  parser: "@typescript-eslint/parser",
+  extends: ["eslint-config-codely/typescript"],
   parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module"
+    project: ["./tsconfig.json", "./tsconfig.config.json"],
   },
-  plugins: [
-    "@typescript-eslint"
-  ],
   rules: {
-    quotes: ["error", "double"],
-    semi: ["error", "always"],
-    "comma-dangle": ["error", "only-multiline"],
-    "space-before-function-paren": ["error", "never"]
-  }
+    "@typescript-eslint/no-non-null-assertion": "off",
+  },
+  overrides: [
+    {
+      files: ["*.js"],
+      rules: {
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-var-requires": "off",
+      },
+    },
+  ],
 };
 EOF
 `);
@@ -246,6 +244,7 @@ cd ${NAME}
 git remote add origin <repo>
 ${PM} install
 ${PM} run dev`);
+
 } else if(isBack){
   console.log(`[${color("yellow", "1")}/3] Iniciando ${color("green", `${NAME}`)}...`);
   exec(`mkdir ${NAME}`);
@@ -262,7 +261,9 @@ ${PM} run dev`);
       "prod": "${PM} run build && node dist/index.js",
       "dev": "nodemon src/server.ts",
       "build": "tsc",
-      "start": "ts-node src/server.ts"
+      "start": "ts-node src/server.ts",
+      "lint": "eslint .",
+      "lint:fix": "eslint --fix ."
     },
     "keywords": [],
     "license": "ISC"
@@ -279,26 +280,24 @@ exec("touch src/index.ts");
 
 exec(`cat >.eslintrc.cjs << EOF
 module.exports = {
-  env: {
-    browser: false
-  },
-  extends: [
-    "@cowcoders/eslint-config/ts"
-  ],
-  parser: "@typescript-eslint/parser",
+  extends: ["eslint-config-codely/typescript"],
   parserOptions: {
-    ecmaVersion: "latest",
-    sourceType: "module"
+    project: ["./tsconfig.json", "./tsconfig.config.json"],
   },
-  plugins: [
-    "@typescript-eslint"
-  ],
   rules: {
-    quotes: ["error", "double"],
-    semi: ["error", "always"],
-    "comma-dangle": ["error", "only-multiline"],
-    "space-before-function-paren": ["error", "never"]
-  }
+    "@typescript-eslint/no-non-null-assertion": "off",
+  },
+  overrides: [
+    {
+      files: ["*.js"],
+      rules: {
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-var-requires": "off",
+      },
+    },
+  ],
 };
 EOF
 `);
@@ -369,21 +368,12 @@ EOF
 
 
 const DEVDEP = [
-    "@cowcoders/eslint-config",
     "@types/cors",
     "@types/express",
     "@types/node",
-    "@typescript-eslint/eslint-plugin",
-    "@typescript-eslint/parser",
     "confusing-browser-globals",
     "eslint",
-    "eslint-config-next",
-    "eslint-config-standard",
-    "eslint-plugin-import",
-    "eslint-plugin-jest",
-    "eslint-plugin-n",
-    "eslint-plugin-promise",
-    "eslint-plugin-testing-library",
+    "eslint-config-codely"
     "nodemon",
     "ts-node",
     "typescript"
